@@ -48,9 +48,7 @@ class TestListConnectionsIntegration:
 
 
 class TestCreateGetDeleteConnectionIntegration:
-    async def test_create_connection(
-        self, integration_client: GuacamoleClient
-    ) -> None:
+    async def test_create_connection(self, integration_client: GuacamoleClient) -> None:
         """create_connection() creates an SSH connection successfully."""
         conn = await create_connection(
             name="integration-test-ssh",
@@ -66,15 +64,11 @@ class TestCreateGetDeleteConnectionIntegration:
 
     async def test_get_connection(self, temp_connection: dict) -> None:
         """get_connection() returns the connection details."""
-        result = await get_connection(
-            connection_id=temp_connection["identifier"]
-        )
+        result = await get_connection(connection_id=temp_connection["identifier"])
         assert result["identifier"] == temp_connection["identifier"]
         assert result["protocol"] == "ssh"
 
-    async def test_get_connection_parameters(
-        self, temp_connection: dict
-    ) -> None:
+    async def test_get_connection_parameters(self, temp_connection: dict) -> None:
         """get_connection_parameters() returns the connection parameters."""
         result = await get_connection_parameters(
             connection_id=temp_connection["identifier"]
@@ -82,9 +76,7 @@ class TestCreateGetDeleteConnectionIntegration:
         assert isinstance(result, dict)
         assert result.get("hostname") == SSH_PARAMS["hostname"]
 
-    async def test_delete_connection(
-        self, integration_client: GuacamoleClient
-    ) -> None:
+    async def test_delete_connection(self, integration_client: GuacamoleClient) -> None:
         """delete_connection() removes the connection."""
         conn = await create_connection(
             name="integration-test-ssh",

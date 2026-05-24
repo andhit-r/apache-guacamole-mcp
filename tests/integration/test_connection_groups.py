@@ -38,9 +38,7 @@ class TestListConnectionGroupsIntegration:
         result = await list_connection_groups()
         assert isinstance(result, dict)
 
-    async def test_each_group_has_identifier(
-        self, temp_conn_group: dict
-    ) -> None:
+    async def test_each_group_has_identifier(self, temp_conn_group: dict) -> None:
         """Each connection group in the list has an 'identifier' field."""
         result = await list_connection_groups()
         assert temp_conn_group["identifier"] in result
@@ -76,9 +74,7 @@ class TestCreateGetDeleteConnectionGroupIntegration:
         group = await create_connection_group(
             name=TEST_GROUP, group_type="ORGANIZATIONAL"
         )
-        result = await delete_connection_group(
-            connection_group_id=group["identifier"]
-        )
+        result = await delete_connection_group(connection_group_id=group["identifier"])
         assert result == {"status": "ok"}
 
     async def test_get_nonexistent_group_raises(

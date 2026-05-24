@@ -20,7 +20,8 @@ from __future__ import annotations
 import json
 import os
 import sys
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Any
 
 import pytest
 from fastmcp import Client
@@ -67,7 +68,9 @@ def _parse_result(result: Any) -> Any:
     if result.content:
         # Standard case: first content item holds JSON text
         first = result.content[0]
-        assert isinstance(first, TextContent), f"Expected TextContent, got {type(first)}"
+        assert isinstance(first, TextContent), (
+            f"Expected TextContent, got {type(first)}"
+        )
         return json.loads(first.text)
     # Empty-content case (e.g. empty list): FastMCP stores result in .data
     if hasattr(result, "data"):
@@ -118,18 +121,14 @@ async def mcp_client(guacamole_url: str) -> AsyncGenerator[Client, None]:
 class TestMcpServerInitStdio:
     """Verify the MCP server initialises correctly over stdio."""
 
-    async def test_list_tools_returns_expected_tools(
-        self, mcp_client: Client
-    ) -> None:
+    async def test_list_tools_returns_expected_tools(self, mcp_client: Client) -> None:
         """list_tools() returns at least the core tool set."""
         tools = await mcp_client.list_tools()
         tool_names = {t.name for t in tools}
         for expected in EXPECTED_TOOLS:
             assert expected in tool_names, f"Tool '{expected}' not registered"
 
-    async def test_tool_annotations_have_description(
-        self, mcp_client: Client
-    ) -> None:
+    async def test_tool_annotations_have_description(self, mcp_client: Client) -> None:
         """Every tool has a non-empty description."""
         tools = await mcp_client.list_tools()
         for tool in tools:
@@ -158,17 +157,13 @@ class TestAuthViaStdio:
 class TestConnectionToolsViaStdio:
     """Connection CRUD through the MCP protocol."""
 
-    async def test_list_connections_returns_dict(
-        self, mcp_client: Client
-    ) -> None:
+    async def test_list_connections_returns_dict(self, mcp_client: Client) -> None:
         """list_connections() returns a JSON object."""
         result = await mcp_client.call_tool("list_connections", {})
         data = _parse_result(result)
         assert isinstance(data, dict)
 
-    async def test_create_and_delete_connection(
-        self, mcp_client: Client
-    ) -> None:
+    async def test_create_and_delete_connection(self, mcp_client: Client) -> None:
         """create_connection() and delete_connection() round-trip via stdio."""
         create_result = await mcp_client.call_tool(
             "create_connection",
@@ -209,9 +204,7 @@ class TestConnectionToolsViaStdio:
 class TestUserToolsViaStdio:
     """User management through the MCP protocol."""
 
-    async def test_list_users_contains_guacadmin(
-        self, mcp_client: Client
-    ) -> None:
+    async def test_list_users_contains_guacadmin(self, mcp_client: Client) -> None:
         """list_users() returns a dict that includes the built-in admin."""
         result = await mcp_client.call_tool("list_users", {})
         data = _parse_result(result)
@@ -242,17 +235,13 @@ class TestUserToolsViaStdio:
 class TestUserGroupToolsViaStdio:
     """User group management through the MCP protocol."""
 
-    async def test_list_user_groups_returns_dict(
-        self, mcp_client: Client
-    ) -> None:
+    async def test_list_user_groups_returns_dict(self, mcp_client: Client) -> None:
         """list_user_groups() returns a JSON object."""
         result = await mcp_client.call_tool("list_user_groups", {})
         data = _parse_result(result)
         assert isinstance(data, dict)
 
-    async def test_create_and_delete_user_group(
-        self, mcp_client: Client
-    ) -> None:
+    async def test_create_and_delete_user_group(self, mcp_client: Client) -> None:
         """create_user_group() and delete_user_group() round-trip via stdio."""
         create_result = await mcp_client.call_tool(
             "create_user_group",
@@ -276,17 +265,13 @@ class TestUserGroupToolsViaStdio:
 class TestConnectionGroupToolsViaStdio:
     """Connection group management through the MCP protocol."""
 
-    async def test_list_connection_tree_has_root(
-        self, mcp_client: Client
-    ) -> None:
+    async def test_list_connection_tree_has_root(self, mcp_client: Client) -> None:
         """list_connection_tree() returns the ROOT node."""
         result = await mcp_client.call_tool("list_connection_tree", {})
         data = _parse_result(result)
         assert data.get("identifier") == "ROOT"
 
-    async def test_create_and_delete_connection_group(
-        self, mcp_client: Client
-    ) -> None:
+    async def test_create_and_delete_connection_group(self, mcp_client: Client) -> None:
         """create_connection_group() and delete_connection_group() round-trip."""
         create_result = await mcp_client.call_tool(
             "create_connection_group",
@@ -297,9 +282,7 @@ class TestConnectionGroupToolsViaStdio:
         group_id = group["identifier"]
 
         try:
-            list_result = await mcp_client.call_tool(
-                "list_connection_groups", {}
-            )
+            list_result = await mcp_client.call_tool("list_connection_groups", {})
             groups = _parse_result(list_result)
             assert group_id in groups
         finally:
@@ -322,9 +305,7 @@ class TestHistoryViaStdio:
         data = _parse_result(result)
         assert isinstance(data, list)
 
-    async def test_list_user_history_returns_list(
-        self, mcp_client: Client
-    ) -> None:
+    async def test_list_user_history_returns_list(self, mcp_client: Client) -> None:
         """list_user_history() returns a JSON array."""
         result = await mcp_client.call_tool("list_user_history", {})
         data = _parse_result(result)

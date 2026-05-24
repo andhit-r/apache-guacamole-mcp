@@ -30,9 +30,7 @@ class TestAuthenticateIntegration:
         result = await authenticate()
         assert result["status"] == "authenticated"
 
-    async def test_wrong_password_raises_auth_error(
-        self, guacamole_url: str
-    ) -> None:
+    async def test_wrong_password_raises_auth_error(self, guacamole_url: str) -> None:
         """Wrong credentials raise GuacamoleAuthError."""
         from guacamole_mcp import state
 
@@ -57,9 +55,7 @@ class TestAuthenticateIntegration:
 class TestLogoutIntegration:
     """Test :func:`~guacamole_mcp.tools.auth.logout` against a real server."""
 
-    async def test_logout_returns_ok(
-        self, integration_client: GuacamoleClient
-    ) -> None:
+    async def test_logout_returns_ok(self, integration_client: GuacamoleClient) -> None:
         """logout() returns status ok and clears the token."""
         result = await logout()
         assert result == {"status": "ok"}
