@@ -180,8 +180,8 @@ class GuacamoleClient:
 
         response = await self._http.request(method, path, params=params, **kwargs)
 
-        if response.status_code == 401:
-            logger.debug("Token expired, re-authenticating")
+        if response.status_code in (401, 403):
+            logger.debug("Token may be expired (HTTP %s), re-authenticating", response.status_code)
             token = await self.authenticate()
             params["token"] = token
             response = await self._http.request(method, path, params=params, **kwargs)

@@ -126,6 +126,43 @@ class TestRequest:
         assert result == {"result": "ok"}
         assert call_count == 2
 
+    async def test_retries_on_403_stale_token(self, client: GuacamoleClient) -> None:
+        """Guacamole returns 403 (not 401) for expired/invalid tokens."""
+        client._token = "stale-token"
+        with respx.mock(base_url=BASE_URL) as mock:
+            mock.post("/api/tokens").mock(
+                return_value=httpx.Response(200, json=AUTH_RESP)
+            )
+            call_count = 0
+
+            def side_effect(request: httpx.Request) -> httpx.Response:
+                nonlocal call_count
+                call_count += 1
+                if call_count == 1:
+                    return httpx.Response(403, json={"message": "Permission Denied."})
+                return httpx.Response(200, json={"result": "ok"})
+
+            mock.get("/api/session/data/postgresql/users").mock(side_effect=side_effect)
+            result = await client.get("/api/session/data/postgresql/users")
+
+        assert result == {"result": "ok"}
+        assert call_count == 2
+
+    async def test_raises_403_on_genuine_permission_denied(self, client: GuacamoleClient) -> None:
+        """After re-auth, a second 403 is a real permission error."""
+        client._token = TOKEN
+        with respx.mock(base_url=BASE_URL) as mock:
+            mock.post("/api/tokens").mock(
+                return_value=httpx.Response(200, json=AUTH_RESP)
+            )
+            mock.get("/api/session/data/postgresql/connections").mock(
+                return_value=httpx.Response(403, json={"message": "Permission Denied."})
+            )
+            with pytest.raises(GuacamoleError) as exc_info:
+                await client.get("/api/session/data/postgresql/connections")
+
+        assert exc_info.value.status_code == 403
+
     async def test_raises_not_found(self, client: GuacamoleClient) -> None:
         client._token = TOKEN
         with respx.mock(base_url=BASE_URL) as router:
