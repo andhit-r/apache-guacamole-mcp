@@ -1,0 +1,18 @@
+services:
+  guacamole-mcp:
+    build: .
+    image: ghcr.io/andhit-r/guacamole-mcp:latest
+    environment:
+      GUACAMOLE_URL: "${GUACAMOLE_URL:-http://guacamole:8080}"
+      GUACAMOLE_USERNAME: "${GUACAMOLE_USERNAME:-guacadmin}"
+      GUACAMOLE_PASSWORD: "${GUACAMOLE_PASSWORD:-guacadmin}"
+      GUACAMOLE_DATA_SOURCE: "${GUACAMOLE_DATA_SOURCE:-postgresql}"
+      GUACAMOLE_TRANSPORT: "${GUACAMOLE_TRANSPORT:-sse}"
+      HOST: "0.0.0.0"
+      PORT: "8000"
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true

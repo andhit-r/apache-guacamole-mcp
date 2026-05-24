@@ -1,0 +1,64 @@
+services:
+  # Step 1: generate the Guacamole PostgreSQL schema SQL into a shared volume
+  guacamole-init:
+    image: guacamole/guacamole:1.5.5
+    user: root
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - "/opt/guacamole/bin/initdb.sh --postgresql > /initdb/001_initdb.sql"
+    volumes:
+      - initdb-sql:/initdb
+
+  # Step 2: PostgreSQL — starts only after SQL file is ready, runs it on first boot
+  postgres:
+    image: postgres:15-alpine
+    depends_on:
+      guacamole-init:
+        condition: service_completed_successfully
+    environment:
+      POSTGRES_DB: guacamole_db
+      POSTGRES_USER: guacamole_user
+      POSTGRES_PASSWORD: guacamole_password
+    volumes:
+      - initdb-sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guacamole_user -d guacamole_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Step 3: guacd (Guacamole proxy daemon)
+  guacd:
+    image: guacamole/guacd:1.5.5
+
+  # Step 4: Guacamole web application
+  guacamole:
+    image: guacamole/guacamole:1.5.5
+    depends_on:
+      postgres:
+        condition: service_healthy
+      guacd:
+        condition: service_started
+    environment:
+      GUACD_HOSTNAME: guacd
+      GUACD_PORT: "4822"
+      POSTGRESQL_HOSTNAME: postgres
+      POSTGRESQL_PORT: "5432"
+      POSTGRESQL_DATABASE: guacamole_db
+      POSTGRESQL_USER: guacamole_user
+      POSTGRESQL_PASSWORD: guacamole_password
+    ports:
+      - "8080"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sf http://localhost:8080/guacamole/api/languages || exit 1",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 30s
+
+volumes:
+  initdb-sql:

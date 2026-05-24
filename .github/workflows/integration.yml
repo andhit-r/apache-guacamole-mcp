@@ -1,0 +1,41 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+  workflow_dispatch:
+
+jobs:
+  integration:
+    name: Integration Tests (Guacamole + MCP)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -e ".[dev,integration]"
+
+      # Docker Compose v2 is pre-installed on ubuntu-latest runners.
+      # Pre-pull images to make start-up faster.
+      - name: Pre-pull Docker images
+        run: |
+          docker pull guacamole/guacamole:1.5.5
+          docker pull guacamole/guacd:1.5.5
+          docker pull postgres:15-alpine
+
+      - name: Run integration tests
+        run: |
+          pytest tests/integration/ -v --tb=short
+        timeout-minutes: 15
+
+      - name: Collect Docker logs on failure
+        if: failure()
+        run: |
+          docker compose -f tests/integration/docker-compose.yml logs --no-color || true
