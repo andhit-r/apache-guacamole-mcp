@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   release:
-    name: GitHub Release + PyPI
+    name: GitHub Release
     runs-on: ubuntu-latest
     environment: release
 
@@ -21,7 +21,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install build tools
-        run: pip install build twine
+        run: pip install build
 
       - name: Build distribution
         run: python -m build
@@ -31,9 +31,3 @@ jobs:
         with:
           generate_release_notes: true
           files: dist/*
-
-      - name: Publish to PyPI
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: twine upload dist/*
